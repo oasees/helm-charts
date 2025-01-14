@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  oasees-telemetry:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2025-01-14T13:42:04.436683952Z"
+    description: A Helm chart for Kubernetes
+    digest: bb72d825d8e86d80a844bf9f34e73fea683c2b80d64be2bbcf57390c5cef4105
+    name: oasees-telemetry
+    type: application
+    urls:
+    - https://github.com/oasees/helm-charts/releases/download/oasees-telemetry-0.1.1/oasees-telemetry-0.1.1.tgz
+    version: 0.1.1
+generated: "2025-01-14T13:42:04.436694041Z"
