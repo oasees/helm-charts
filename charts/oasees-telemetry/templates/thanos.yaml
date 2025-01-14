@@ -1,0 +1,322 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: opentelemetry-collector
+  namespace: default
+---
+# Then the ClusterRole (which you already have)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: otel-collector
+rules:
+- apiGroups: [""]
+  resources: ["nodes", "nodes/stats", "nodes/metrics", "pods"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel-collector
+  # annotations:
+  #   # helm.sh/hook: post-install
+  labels:
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  mode: daemonset
+  serviceAccount: opentelemetry-collector 
+  config:
+    receivers:
+      hostmetrics:
+        collection_interval: 30s
+        scrapers:
+          cpu: {}
+          memory: {}
+          disk: {}
+          filesystem: {}
+          network: {}
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: 'kubernetes-nodes'
+              scheme: https
+              tls_config:
+                insecure_skip_verify: true
+              kubernetes_sd_configs:
+                - role: node
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              metric_relabel_configs:
+                - source_labels: [__name__]
+                  regex: '(kube_node.*|node.*|container.*)'
+                  action: keep
+              relabel_configs:
+                - action: labelmap
+                  regex: __meta_kubernetes_node_label_(.+)
+                - target_label: kubernetes_node
+                  source_labels: [__meta_kubernetes_node_name]
+            - job_name: 'kube-state-metrics'
+              static_configs:
+                - targets: ['kube-state-metrics:8080']
+            - job_name: 'kubernetes-nodes-resources'
+              scheme: https
+              tls_config:
+                insecure_skip_verify: true
+              kubernetes_sd_configs:
+                - role: node
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              metric_relabel_configs:
+                - source_labels: [__name__]
+                  regex: '(kube_node_status_allocatable.*|kube_node_status_capacity.*|kube_pod_container_resource_requests.*|kube_pod_container_resource_limits.*|kube_pod_container_resource_requests_nvidia_com_gpu|kube_pod_container_resource_limits_nvidia_com_gpu)'
+                  action: keep
+              relabel_configs:
+                - action: labelmap
+                  regex: __meta_kubernetes_node_label_(.+)
+                - target_label: kubernetes_node
+                  source_labels: [__meta_kubernetes_node_name]
+            - job_name: 'kubelet'
+              scheme: https
+              metrics_path: /metrics/resource
+              kubernetes_sd_configs:
+                - role: node
+              tls_config:
+                insecure_skip_verify: true
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              relabel_configs:
+                - action: labelmap
+                  regex: __meta_kubernetes_node_label_(.+)
+                - target_label: kubernetes_node
+                  source_labels: [__meta_kubernetes_node_name]
+            - job_name: 'mqtt-subscribers'
+              honor_timestamps: true
+              scrape_interval: 10s
+              scrape_timeout: 5s
+              kubernetes_sd_configs:
+                - role: pod
+              relabel_configs:
+                - source_labels: [__meta_kubernetes_pod_label_app]
+                  action: keep
+                  regex: mqtt-subscriber
+                - source_labels: [__meta_kubernetes_pod_ip]
+                  target_label: __address__
+                  regex: (.*)
+                  replacement: $1:8000
+                # Add some useful labels
+                - source_labels: [__meta_kubernetes_pod_name]
+                  target_label: pod
+                - source_labels: [__meta_kubernetes_pod_label_app]
+                  target_label: app
+
+    exporters:
+      prometheusremotewrite:
+        endpoint: "http://thanos-receive:19291/api/v1/receive"
+        tls:
+          insecure: true
+        headers:
+          "X-Scope-OrgID": "demo"
+
+    service:
+      telemetry:
+        logs:
+          level: "debug"
+      pipelines:
+        metrics:
+          receivers: [prometheus]
+          exporters: [prometheusremotewrite]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: otel-collector
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: otel-collector
+subjects:
+- kind: ServiceAccount
+  name: opentelemetry-collector
+  namespace: default
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kube-state-metrics
+spec:
+  selector:
+    matchLabels:
+      app: kube-state-metrics
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: kube-state-metrics
+    spec:
+      serviceAccountName: kube-state-metrics
+      containers:
+      - name: kube-state-metrics
+        image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.9.2
+        ports:
+        - containerPort: 8080
+        args:
+        - --metric-labels-allowlist=nodes=[*]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-state-metrics
+spec:
+  ports:
+  - port: 8080
+    targetPort: 8080
+  selector:
+    app: kube-state-metrics
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kube-state-metrics
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kube-state-metrics
+rules:
+- apiGroups: [""]
+  resources: ["nodes", "pods", "services", "resourcequotas", "replicationcontrollers", "limitranges", 
+    "persistentvolumeclaims", "persistentvolumes", "namespaces", "endpoints", "configmaps", "secrets"]
+  verbs: ["list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["statefulsets", "daemonsets", "deployments", "replicasets"]
+  verbs: ["list", "watch"]
+- apiGroups: ["batch"]
+  resources: ["cronjobs", "jobs"]
+  verbs: ["list", "watch"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses", "networkpolicies"]
+  verbs: ["list", "watch"]
+- apiGroups: ["policy"]
+  resources: ["poddisruptionbudgets"]
+  verbs: ["list", "watch"]
+- apiGroups: ["certificates.k8s.io"]
+  resources: ["certificatesigningrequests"]
+  verbs: ["list", "watch"]
+- apiGroups: ["storage.k8s.io"]
+  resources: ["storageclasses", "volumeattachments"]
+  verbs: ["list", "watch"]
+- apiGroups: ["admissionregistration.k8s.io"]
+  resources: ["validatingwebhookconfigurations", "mutatingwebhookconfigurations"]
+  verbs: ["list", "watch"]
+- apiGroups: ["autoscaling"]
+  resources: ["horizontalpodautoscalers"]
+  verbs: ["list", "watch"]
+- apiGroups: ["coordination.k8s.io"]
+  resources: ["leases"]
+  verbs: ["list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kube-state-metrics
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kube-state-metrics
+subjects:
+- kind: ServiceAccount
+  name: kube-state-metrics
+  namespace: default
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thanos-query
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thanos-query
+  template:
+    metadata:
+      labels:
+        app: thanos-query
+    spec:
+      containers:
+      - name: thanos-query
+        image: thanosio/thanos:v0.32.0
+        args:
+          - "query"
+          - "--http-address=0.0.0.0:9090"
+          - "--store=thanos-receive-0.thanos-receive:10901"
+        ports:
+        - containerPort: 9090
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thanos-query
+spec:
+  selector:
+    app: thanos-query
+  ports:
+  - port: 9090
+    targetPort: 9090
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: thanos-receive
+spec:
+  serviceName: thanos-receive
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thanos-receive
+  template:
+    metadata:
+      labels:
+        app: thanos-receive
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: thanos-receive
+        image: thanosio/thanos:v0.32.0
+        args:
+          - "receive"
+          - "--tsdb.path=/var/thanos/receive"
+          - "--grpc-address=0.0.0.0:10901"
+          - "--http-address=0.0.0.0:10902"
+          - "--receive.replication-factor=1"
+          - "--label=receive_replica=\"0\""
+          - "--receive.local-endpoint=thanos-receive:10901"
+        ports:
+        - name: http
+          containerPort: 10902
+        - name: grpc
+          containerPort: 10901
+        - name: remote-write
+          containerPort: 19291
+        volumeMounts:
+        - name: data
+          mountPath: /var/thanos/receive
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: thanos-receive
+spec:
+  selector:
+    app: thanos-receive
+  ports:
+  - name: http
+    port: 10902
+  - name: grpc
+    port: 10901
+  - name: remote-write
+    port: 19291

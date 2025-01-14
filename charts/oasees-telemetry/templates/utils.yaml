@@ -1,0 +1,60 @@
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-cleanup
+  annotations:
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-delete-policy": hook-succeeded,before-hook-creation
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ .Release.Name }}-cleanup  # Don't forget RBAC!
+      containers:
+      - name: kubectl
+        image: bitnami/kubectl
+        command:
+        - /bin/sh
+        - -c
+        - |
+          kubectl patch opentelemetrycollector otel-collector -p '{"metadata":{"finalizers":null}}' --type=merge
+          # Then delete if it still exists
+          kubectl delete opentelemetrycollector otel-collector --timeout=30s || true
+      restartPolicy: Never
+  backoffLimit: 3
+---
+# Required RBAC
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Release.Name }}-cleanup
+  annotations:
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-delete-policy": hook-succeeded,before-hook-creation
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ .Release.Name }}-cleanup
+  annotations:
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-delete-policy": hook-succeeded,before-hook-creation
+rules:
+- apiGroups: ["opentelemetry.io"]
+  resources: ["opentelemetrycollectors"]
+  verbs: ["get", "list", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Release.Name }}-cleanup
+  annotations:
+    "helm.sh/hook": pre-delete
+    "helm.sh/hook-delete-policy": hook-succeeded,before-hook-creation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ .Release.Name }}-cleanup
+subjects:
+- kind: ServiceAccount
+  name: {{ .Release.Name }}-cleanup
