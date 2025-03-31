@@ -11,4 +11,15 @@ entries:
     urls:
     - https://github.com/oasees/helm-charts/releases/download/oasees-telemetry-0.1.1/oasees-telemetry-0.1.1.tgz
     version: 0.1.1
-generated: "2025-01-14T13:42:04.436694041Z"
+  oasees-user:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2025-03-31T13:56:04.650666169Z"
+    description: A chart containing all the needed OASEES components
+    digest: 68f8f6f7333da12cfddd736dcdc67c1362a4426c3fd8b0ae9827b4f25c24af6a
+    name: oasees-user
+    type: application
+    urls:
+    - https://github.com/oasees/helm-charts/releases/download/oasees-user-0.1.1/oasees-user-0.1.1.tgz
+    version: 0.1.1
+generated: "2025-03-31T13:56:04.650679945Z"
