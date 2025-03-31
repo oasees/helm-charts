@@ -1,9 +1,6 @@
 name: Release Charts
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
     branches:
       - main
@@ -30,18 +27,18 @@ jobs:
       - name: Set up chart-testing
         uses: helm/chart-testing-action@v2.7.0
 
-      # - name: Run chart-testing (list-changed)
-      #   id: list-changed
-      #   run: |
-      #     changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }})
-      #     if [[ -n "$changed" ]]; then
-      #       echo "changed=true" >> "$GITHUB_OUTPUT"
-      #     fi
+      - name: Run chart-testing (list-changed)
+        id: list-changed
+        run: |
+          changed=$(ct list-changed --target-branch ${{ github.event.repository.default_branch }})
+          if [[ -n "$changed" ]]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Run chart-testing (lint)
         # if: steps.list-changed.outputs.changed == 'true'
-        # run: ct lint --target-branch ${{ github.event.repository.default_branch }}
-        run: ct lint --all --validate-maintainers=false --target-branch main
+        run: ct lint --validate-maintainers=false --target-branch ${{ github.event.repository.default_branch }}
+        # run: ct lint --all --validate-maintainers=false --target-branch main
 
       - name: Create kind cluster
         # if: steps.list-changed.outputs.changed == 'true'
@@ -50,8 +47,7 @@ jobs:
       - name: Run chart-testing (install)
         # if: steps.list-changed.outputs.changed == 'true'
         # run: ct install --all --namespace default --helm-extra-set-args "--wait --timeout 3m " --target-branch ${{ github.event.repository.default_branch }}
-        # run: ct install --debug --all --namespace default --helm-extra-set-args "--set chartTestRun=true" --target-branch main
-        run: ct install --debug --all --namespace default --target-branch main
+        run: ct install --debug --namespace default --helm-extra-set-args "--set chartTestRun=true" --target-branch ${{ github.event.repository.default_branch }}
   
   release:
     needs: lint-test
