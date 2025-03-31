@@ -22,4 +22,14 @@ entries:
     urls:
     - https://github.com/oasees/helm-charts/releases/download/oasees-user-0.1.1/oasees-user-0.1.1.tgz
     version: 0.1.1
-generated: "2025-03-31T13:56:04.650679945Z"
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2025-03-31T14:00:55.614579292Z"
+    description: A Helm chart for Kubernetes
+    digest: e76ba5603cfd5b2086510e5e9e1b4648a33bf351412ca438d36d2ae0c4f9b15b
+    name: oasees-user
+    type: application
+    urls:
+    - https://github.com/oasees/helm-charts/releases/download/oasees-user-0.1.0/oasees-user-0.1.0.tgz
+    version: 0.1.0
+generated: "2025-03-31T14:00:55.614587007Z"
