@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: oasees-ipfs
-        image: ghcr.io/oasees/ipfs-node:latest
+        image: ghcr.io/achilleaseconomopoulos/ipfs-node:latest
         ports:
         - containerPort: 4001
           hostPort: 4001
