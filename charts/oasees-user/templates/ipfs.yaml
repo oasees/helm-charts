@@ -29,3 +29,5 @@ spec:
           value: "10.160.3.172"
         - name: MASTER_PEER_ID
           value: "12D3KooWG51xC8aADbouSfTbqCfAjUMbWiiWeVFSnBcqby31bTXE"
+        - name: EXPOSED_IP
+          value: {{ .Values.exposedIP | default "localhost" | quote }}
