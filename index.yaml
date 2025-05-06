@@ -14,6 +14,16 @@ entries:
   oasees-user:
   - apiVersion: v2
     appVersion: 1.16.0
+    created: "2025-05-06T08:52:00.44557803Z"
+    description: A chart containing all the needed OASEES components
+    digest: d56457a0088f9f0d138aef48c16de3458ceffedc3a6fa16f9785544a5ce42fa9
+    name: oasees-user
+    type: application
+    urls:
+    - https://github.com/oasees/helm-charts/releases/download/oasees-user-0.2.1/oasees-user-0.2.1.tgz
+    version: 0.2.1
+  - apiVersion: v2
+    appVersion: 1.16.0
     created: "2025-05-05T13:57:55.075551823Z"
     description: A chart containing all the needed OASEES components
     digest: 34a746940a964d7689f3398eb2947f2c10e455f4a2f9c0868210e2555c557f04
@@ -42,4 +52,4 @@ entries:
     urls:
     - https://github.com/oasees/helm-charts/releases/download/oasees-user-0.1.0/oasees-user-0.1.0.tgz
     version: 0.1.0
-generated: "2025-05-05T13:57:55.075569105Z"
+generated: "2025-05-06T08:52:00.44559446Z"
