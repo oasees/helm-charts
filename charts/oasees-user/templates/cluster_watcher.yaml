@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cluster-monitor
+  labels:
+    app: cluster-monitor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cluster-monitor
+  template:
+    metadata:
+      labels:
+        app: cluster-monitor
+    spec:
+      serviceAccountName: notebook-sa
+      containers:
+      - name: cluster-monitor
+        image: ghcr.io/achilleaseconomopoulos/oasees-cmonitor:latest
+        ports:
+        - containerPort: 4000
+          hostPort: 4000
