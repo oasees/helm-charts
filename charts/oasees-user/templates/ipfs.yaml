@@ -31,3 +31,20 @@ spec:
           value: "12D3KooWG51xC8aADbouSfTbqCfAjUMbWiiWeVFSnBcqby31bTXE"
         - name: EXPOSED_IP
           value: {{ .Values.exposedIP | default "localhost" | quote }}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: oasees-ipfs
+spec:
+  selector:
+    app: oasees-ipfs
+  ports:
+    - port: 5001
+      targetPort: 5001
+      name: api
+    - port: 8080
+      targetPort: 8080
+      name: gateway
