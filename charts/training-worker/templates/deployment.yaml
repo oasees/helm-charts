@@ -26,9 +26,11 @@ spec:
         volumeMounts:
         - name: venv
           mountPath: /venv
+        {{- if .Values.gpu }}
         resources:
           limits:
             nvidia.com/gpu: {{ .Values.gpu }}
+        {{- end }}
       volumes:
       - name: venv
         hostPath:
