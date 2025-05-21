@@ -85,6 +85,17 @@ entries:
   training-worker:
   - apiVersion: v2
     appVersion: 1.16.0
+    created: "2025-05-21T13:45:32.355166054Z"
+    description: Components to enable the scheduling of ML training workloads on the
+      node
+    digest: 390b9c48f6c44f34c2207f979523e5b2cadc5535789fb3395b0c7f0651286217
+    name: training-worker
+    type: application
+    urls:
+    - https://github.com/oasees/helm-charts/releases/download/training-worker-0.1.2/training-worker-0.1.2.tgz
+    version: 0.1.2
+  - apiVersion: v2
+    appVersion: 1.16.0
     created: "2025-05-21T13:13:15.791272636Z"
     description: Components to enable the scheduling of ML training workloads on the
       node
@@ -105,4 +116,4 @@ entries:
     urls:
     - https://github.com/oasees/helm-charts/releases/download/training-worker-0.1.0/training-worker-0.1.0.tgz
     version: 0.1.0
-generated: "2025-05-21T13:13:15.791294697Z"
+generated: "2025-05-21T13:45:32.355188906Z"
