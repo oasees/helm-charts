@@ -1,0 +1,153 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: opentelemetry-collector
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: otel-collector
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints"]
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel-collector
+  labels:
+    app.kubernetes.io/instance: otel-collector
+spec:
+  mode: deployment
+  replicas: 1
+  serviceAccount: opentelemetry-collector 
+  config:
+    receivers:
+      prometheus:
+        config:
+          global:
+            scrape_interval: 30s
+            external_labels:
+              cluster: "main-cluster"
+          scrape_configs:
+            # Generic scraper for any pod with prometheus.io annotations
+            - job_name: 'kubernetes-pods'
+              kubernetes_sd_configs:
+                - role: pod
+              relabel_configs:
+                # Only scrape pods with prometheus.io/scrape=true annotation
+                - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+                  action: keep
+                  regex: true
+                
+                # Use custom path if prometheus.io/path is set, otherwise /metrics
+                - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+                  action: replace
+                  target_label: __metrics_path__
+                  regex: (.+)
+                  replacement: $1
+                - target_label: __metrics_path__
+                  replacement: /metrics
+                  regex: ^$
+                
+                # Use custom port if prometheus.io/port is set, otherwise pod port
+                - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+                  action: replace
+                  regex: ([^:]+)(?::\d+)?;(\d+)
+                  replacement: $1:$2
+                  target_label: __address__
+                
+                # Add useful labels from pod metadata
+                - source_labels: [__meta_kubernetes_pod_name]
+                  target_label: pod
+                - source_labels: [__meta_kubernetes_namespace]
+                  target_label: namespace
+                - source_labels: [__meta_kubernetes_pod_label_app]
+                  target_label: app
+                - source_labels: [__meta_kubernetes_pod_node_name]
+                  target_label: node
+                
+                # Set instance label (required by Prometheus/Thanos)
+                - source_labels: [__meta_kubernetes_pod_ip, __meta_kubernetes_pod_annotation_prometheus_io_port]
+                  target_label: instance
+                  regex: (.+);(.+)
+                  replacement: $1:$2
+                - source_labels: [__meta_kubernetes_pod_ip]
+                  target_label: instance
+                  regex: (.+)
+                  replacement: $1:8000
+                
+              # Filter out built-in Prometheus/Python metrics, keep only custom ones
+              metric_relabel_configs:
+                # Drop Python/Prometheus built-in metrics
+                - source_labels: [__name__]
+                  regex: '^(python_|process_|prometheus_|go_).*'
+                  action: drop
+                # Drop HTTP client metrics from the collector itself
+                - source_labels: [__name__]
+                  regex: '^http_(request_duration_seconds|requests_total).*'
+                  action: drop
+                # Keep only your custom metrics (adjust regex to match your naming)
+                - source_labels: [__name__]
+                  regex: '^(oasees_).*'
+                  action: keep
+
+    processors:
+      # Memory limiter to prevent OOM
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 80
+
+      # Ensure required attributes exist
+      resource:
+        attributes:
+          - key: service.name
+            value: "prometheus-scraped-metrics"
+            action: insert
+          - key: service.instance.id
+            value: "otel-collector"
+            action: insert
+
+      # Batch for efficiency
+      batch:
+        timeout: 5s
+        send_batch_size: 512
+
+    exporters:
+      prometheusremotewrite:
+        endpoint: "http://thanos-receive:19291/api/v1/receive"
+        tls:
+          insecure: true
+        headers:
+          "X-Scope-OrgID": "demo"
+        external_labels:
+          cluster: "main-cluster"
+          source: "otel-scraper"
+
+    service:
+      telemetry:
+        logs:
+          level: "info"  # Reduce log noise
+      pipelines:
+        metrics:
+          receivers: [prometheus]
+          processors: 
+            - memory_limiter
+            - resource
+            - batch
+          exporters: [prometheusremotewrite]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: otel-collector
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: otel-collector
+subjects:
+- kind: ServiceAccount
+  name: opentelemetry-collector
+  namespace: default
