@@ -3,6 +3,16 @@ entries:
   oasees-telemetry:
   - apiVersion: v2
     appVersion: 1.16.0
+    created: "2025-06-02T15:30:17.821162883Z"
+    description: A Helm chart for Kubernetes
+    digest: 9205afe9f3192eceb25e4bb3ecf10af98ec11b92a56134aef84547b0bb6bd4b0
+    name: oasees-telemetry
+    type: application
+    urls:
+    - https://github.com/oasees/helm-charts/releases/download/oasees-telemetry-0.1.2/oasees-telemetry-0.1.2.tgz
+    version: 0.1.2
+  - apiVersion: v2
+    appVersion: 1.16.0
     created: "2025-01-14T13:42:04.436683952Z"
     description: A Helm chart for Kubernetes
     digest: bb72d825d8e86d80a844bf9f34e73fea683c2b80d64be2bbcf57390c5cef4105
@@ -116,4 +126,4 @@ entries:
     urls:
     - https://github.com/oasees/helm-charts/releases/download/training-worker-0.1.0/training-worker-0.1.0.tgz
     version: 0.1.0
-generated: "2025-05-21T13:45:32.355188906Z"
+generated: "2025-06-02T15:30:17.821182089Z"
