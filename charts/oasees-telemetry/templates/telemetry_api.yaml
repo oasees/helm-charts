@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oasees-telemetry-api
+  namespace: default
+  labels:
+    app: oasees-telemetry-api
+
+spec:
+  replicas: 1 
+  selector: 
+    matchLabels:
+      app: oasees-telemetry-api
+  template:
+    metadata:
+      labels:
+        app: oasees-telemetry-api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics" 
+    spec:
+      containers:
+      - name: oasees-telemetry-api
+        image: ghcr.io/oasees/telemetry_api:latest
+        ports:
+        - containerPort: 5005
+          name: http
+        - containerPort: 8000
+          name: metrics
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: oasees-telemetry-api-svc
+  namespace: default
+  labels:
+    app: oasees-telemetry-api
+spec:
+  type: NodePort
+  selector:
+    app: oasees-telemetry-api
+  ports:
+  - port: 5005
+    targetPort: 5005
+    nodePort: 30080
+    protocol: TCP
+    name: http

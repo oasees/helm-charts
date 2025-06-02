@@ -28,7 +28,7 @@ spec:
       prometheus:
         config:
           global:
-            scrape_interval: 30s
+            scrape_interval: 5s
             external_labels:
               cluster: "main-cluster"
           scrape_configs:
@@ -110,7 +110,6 @@ spec:
             value: "otel-collector"
             action: insert
 
-      # Batch for efficiency
       batch:
         timeout: 5s
         send_batch_size: 512
@@ -129,7 +128,7 @@ spec:
     service:
       telemetry:
         logs:
-          level: "info"  # Reduce log noise
+          level: "info"
       pipelines:
         metrics:
           receivers: [prometheus]
