@@ -28,7 +28,7 @@ spec:
       prometheus:
         config:
           global:
-            scrape_interval: 5s
+            scrape_interval: 1s
             external_labels:
               cluster: "main-cluster"
           scrape_configs:
