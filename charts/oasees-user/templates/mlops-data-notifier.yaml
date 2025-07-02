@@ -1,0 +1,185 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: mlops-data-notifier
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: mlops-data-notifier
+  template:
+    metadata:
+      labels:
+        app: mlops-data-notifier
+    spec:
+      containers:
+      - name: mlops-data-notifier
+        image: oasees/ml-base-image:latest
+        command: ["/bin/sh"]
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        args:
+          - -c
+          - |
+            pip install watchdog &&
+            python3 -c "
+            import time
+            import socket
+            import os
+            import subprocess
+            from watchdog.observers import Observer
+            from watchdog.events import FileSystemEventHandler
+            import logging
+            import tempfile
+            
+            node_name = os.environ.get('NODE_NAME', 'unknown-node')
+            IPFS_IP = socket.gethostbyname('oasees-ipfs')
+
+            logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
+            logger = logging.getLogger(__name__)
+
+            api_endpoint = f'/ip4/{IPFS_IP}/tcp/5001/http'
+
+            def upload_to_ipfs(file_path):
+
+                try:
+                    add_cmd = ['ipfs', f'--api={api_endpoint}', 'add', '-q', file_path]
+                    add_result = subprocess.run(add_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                    
+                    if add_result.returncode != 0:
+                        logger.error(f'Failed to add {file_path} to IPFS: {add_result.stderr}')
+                        return None
+                        
+                    hash_lines = add_result.stdout.strip().split('\n')
+                    file_hash = hash_lines[-1].strip()
+                    
+                    mfs_path = f'/oasees-ml-ops/synthetic_data/{os.path.basename(file_path)}'
+                    
+                    cp_cmd = ['ipfs', f'--api={api_endpoint}', 'files', 'cp', f'/ipfs/{file_hash}', mfs_path]
+                    cp_result = subprocess.run(cp_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                    
+                    if cp_result.returncode != 0:
+                        logger.error(f'Failed to copy {file_hash} to MFS {mfs_path}: {cp_result.stderr}')
+                        return None
+
+
+                    with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
+                        temp_file.write('000')
+                        temp_path = temp_file.name
+
+
+                    add_cmd = ['ipfs', f'--api={api_endpoint}', 'add', '-Q', temp_path]
+                    add_result = subprocess.run(add_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                    
+                    if add_result.returncode != 0:
+                        logger.error(f'Failed to add empty file to IPFS: {add_result.stderr}')
+                        return None
+                        
+                    empty_file_hash = add_result.stdout.strip()
+                    
+                    file_rec = f'{file_path}-{node_name}'.replace('/var/tmp/synth_','').replace('/host','')
+                    print(file_rec)
+                    mfs_path = f'/oasees-ml-ops/data_paths/{file_rec}'
+                    
+                    cp_cmd = ['ipfs', f'--api={api_endpoint}', 'files', 'cp', f'/ipfs/{empty_file_hash}', mfs_path]
+                    cp_result = subprocess.run(cp_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                    
+                    if cp_result.returncode != 0:
+                        logger.error(f'Failed to copy empty file to MFS {mfs_path}: {cp_result.stderr}')
+                        return None
+
+
+
+                    logger.info(f'Successfully uploaded {file_path} to IPFS with hash {file_hash} and copied to MFS {mfs_path}')
+                    return file_hash
+                    
+                except Exception as e:
+                    logger.error(f'Error uploading {file_path} to IPFS: {e}')
+                    print(e)
+                    return None
+
+            def delete_from_ipfs(file_path):
+                try:
+                    # Generate MFS path based on file path
+                    mfs_path = f'/oasees-ml-ops/synthetic_data/{os.path.basename(file_path)}'
+                    
+                    # Remove from MFS
+                    rm_cmd = ['ipfs', f'--api={api_endpoint}', 'files', 'rm', mfs_path]
+                    rm_result = subprocess.run(rm_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                    
+                    if rm_result.returncode != 0:
+                        logger.error(f'Failed to delete {mfs_path} from IPFS MFS: {rm_result.stderr}')
+                        return False
+                        
+                    logger.info(f'Successfully deleted {file_path} from IPFS MFS {mfs_path}')
+                    return True
+                    
+                except Exception as e:
+                    logger.error(f'Error deleting {file_path} from IPFS: {e}')
+                    return False
+
+            class NPYFileHandler(FileSystemEventHandler):
+                def on_created(self, event):
+                    if 'synth' in event.src_path:
+                        if not event.is_directory and event.src_path.endswith('.npy'):
+                            host_path = event.src_path.replace('/host', '')
+                            logger.info(f'{host_path} is added')
+                            
+                            upload_to_ipfs(event.src_path)
+                    
+                    
+                def on_moved(self, event):
+                    if 'synth' in event.src_path:
+                        if not event.is_directory and event.dest_path.endswith('.npy'):
+                            host_path = event.dest_path.replace('/host', '')
+                            logger.info(f'{host_path} is added')
+                            
+                            upload_to_ipfs(event.dest_path)
+                
+                def on_deleted(self, event):
+                    if 'synth' in event.src_path:
+                        if not event.is_directory and event.src_path.endswith('.npy'):
+                            host_path = event.src_path.replace('/host', '')
+                            logger.info(f'{host_path} is deleted')
+                            
+                            delete_from_ipfs(event.src_path)
+
+            event_handler = NPYFileHandler()
+            observer = Observer()
+            observer.schedule(event_handler, '/host/var/tmp', recursive=True)
+
+            observer.start()
+
+            try:
+                while True:
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                observer.stop()
+            observer.join()
+            "
+        volumeMounts:
+        - name: host-var-tmp
+          mountPath: /host/var/tmp
+          readOnly: false
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+      volumes:
+      - name: host-var-tmp
+        hostPath:
+          path: /var/tmp
+          type: Directory
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
