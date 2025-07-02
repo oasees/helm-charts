@@ -63,21 +63,25 @@ roleRef:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: notebook
+  name: oasees-notebook
   namespace: default
+  labels:
+    component: oasees-notebook
 spec:
   selector:
     matchLabels:
-      app: notebook
+      app: oasees-notebook
   template:
     metadata:
       labels:
-        app: notebook
+        app: oasees-notebook
     spec:
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"
       serviceAccountName: notebook-sa
       containers:
       - name: oasees-notebook
-        image: ghcr.io/oasees/oasees-notebook:latest
+        image: oasees/oasees-notebook:latest
         command: ["/usr/local/bin/init-oasees-notebook.sh"]
         ports:
         - containerPort: 8081
@@ -87,12 +91,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: notebook
+  name: oasees-notebook
   namespace: default
+  labels:
+    component: oasees-notebook
 spec:
   type: NodePort
   ports:
   - port: 8081
-    nodePort: 30081
   selector:
-    app: notebook 
+    app: oasees-notebook

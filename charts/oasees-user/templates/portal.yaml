@@ -14,24 +14,24 @@ spec:
       labels:
         app: oasees-portal
     spec:
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"
       containers:
       - name: oasees-portal
-        image: ghcr.io/achilleaseconomopoulos/oasees-portal:latest
-        command: [ "/bin/sh", "-c", "npm start" ]
+        imagePullPolicy: Always
+        image: oasees/oasees-portal:latest
+        command: [ "/bin/sh", "-c" ]
+        args:
+          - |
+            echo "REACT_APP_EXPOSED_IP=$REACT_APP_EXPOSED_IP" > .env 
+            npm start
         ports:
         - containerPort: 3000
         env:
         - name: REACT_APP_EXPOSED_IP
-          value: {{ .Values.exposedIP | default "localhost" | quote }}
+          value: "10.160.1.209"
         - name: REACT_APP_BLOCKCHAIN_HOST
-          value: {{ .Values.blockchainHost | default "10.160.3.172:8545" | quote }}
-        - name: REACT_APP_BLOCK_EXPLORER_API
-          value: {{ .Values.blockscoutApi | default "10.160.3.172:8082/api/v2" | quote }}
-        - name: REACT_APP_MARKETPLACE_ADDRESS
-          value: {{ .Values.marketplaceAddress | default "0x5FbDB2315678afecb367f032d93F642f64180aa3" | quote }}
-        - name: REACT_APP_NFT_ADDRESS
-          value: {{ .Values.nftAddress | default "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512" | quote }}
-
+          value: "10.160.3.172"
 ---
 
 apiVersion: v1
