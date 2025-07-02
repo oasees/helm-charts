@@ -29,7 +29,7 @@ spec:
         - containerPort: 3000
         env:
         - name: REACT_APP_EXPOSED_IP
-          value: {{ exposedIP }}
+          value: {{ .Values.exposedIP }}
         - name: REACT_APP_BLOCKCHAIN_HOST
           value: "10.160.3.172"
 ---
