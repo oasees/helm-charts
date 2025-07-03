@@ -82,6 +82,7 @@ spec:
       containers:
       - name: oasees-notebook
         image: oasees/oasees-notebook:latest
+        imagePullPolicy: IfNotPresent
         command: ["/usr/local/bin/init-oasees-notebook.sh"]
         ports:
         - containerPort: 8081

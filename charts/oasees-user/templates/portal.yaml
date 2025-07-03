@@ -18,7 +18,7 @@ spec:
         node-role.kubernetes.io/control-plane: "true"
       containers:
       - name: oasees-portal
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         image: oasees/oasees-portal:latest
         command: [ "/bin/sh", "-c" ]
         args:

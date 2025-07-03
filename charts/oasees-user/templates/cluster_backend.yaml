@@ -18,6 +18,7 @@ spec:
       containers:
       - name: cluster-backend
         image: oasees/cluster-backend:latest
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 4000
 

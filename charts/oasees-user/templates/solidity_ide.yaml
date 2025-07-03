@@ -19,6 +19,7 @@ spec:
       containers:
       - name: oasees-solidity-ide
         image: oasees/solidity-ide:latest
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 3001
 
