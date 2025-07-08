@@ -23,6 +23,8 @@ spec:
       containers:
       - name: oasees-portal
         # imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
+
         image: oasees/oasees-portal:latest
         command: [ "/bin/sh", "-c" ]
         args:

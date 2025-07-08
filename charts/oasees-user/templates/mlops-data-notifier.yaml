@@ -20,6 +20,7 @@ spec:
       containers:
       - name: mlops-data-notifier
         image: oasees/ml-base-image:latest
+        imagePullPolicy: IfNotPresent
         command: ["/bin/sh"]
         env:
         - name: NODE_NAME

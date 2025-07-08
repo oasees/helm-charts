@@ -28,7 +28,7 @@ spec:
             cpu: 50m
             memory: 250Mi
         image: "ghcr.io/oasees/device-plugin:latest"
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
         volumeMounts:
