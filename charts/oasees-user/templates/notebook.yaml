@@ -65,8 +65,12 @@ kind: Deployment
 metadata:
   name: oasees-notebook
   namespace: default
+  annotations:
+    meta.helm.sh/release-name: oasees-user
+    meta.helm.sh/release-namespace: default
   labels:
     component: oasees-notebook
+    app.kubernetes.io/managed-by: Helm
 spec:
   selector:
     matchLabels:
@@ -93,7 +97,11 @@ kind: Service
 metadata:
   name: oasees-notebook
   namespace: default
+  annotations:
+    meta.helm.sh/release-name: oasees-user
+    meta.helm.sh/release-namespace: default
   labels:
+    app.kubernetes.io/managed-by: Helm
     component: oasees-notebook
 spec:
   type: NodePort

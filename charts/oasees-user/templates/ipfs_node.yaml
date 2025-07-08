@@ -1,8 +1,12 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  annotations:
+    meta.helm.sh/release-name: oasees-user
+    meta.helm.sh/release-namespace: default
   name: oasees-ipfs
   labels:
+    app.kubernetes.io/managed-by: Helm
     app: oasees-ipfs
 spec:
   replicas: 1
@@ -14,6 +18,8 @@ spec:
       labels:
         app: oasees-ipfs
     spec:
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"
       containers:
       - name: oasees-ipfs
         image: ghcr.io/achilleaseconomopoulos/ipfs-node:latest
@@ -30,16 +36,21 @@ spec:
         - name: MASTER_PEER_ID
           value: "12D3KooWG51xC8aADbouSfTbqCfAjUMbWiiWeVFSnBcqby31bTXE"
         - name: EXPOSED_IP
-          value: {{ .Values.exposedIP | default "localhost" | quote }}
+          value: "10.160.1.209"
+          # value: {{ .Values.exposedIP | default "localhost" | quote }}
 
 ---
 
 apiVersion: v1
 kind: Service
 metadata:
+  annotations:
+    meta.helm.sh/release-name: oasees-user
+    meta.helm.sh/release-namespace: default
   name: oasees-ipfs
 spec:
   selector:
+    app.kubernetes.io/managed-by: Helm
     app: oasees-ipfs
   ports:
     - port: 5001

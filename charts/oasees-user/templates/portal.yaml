@@ -1,8 +1,12 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  annotations:
+    meta.helm.sh/release-name: oasees-user
+
   name: oasees-portal
   labels:
+    app.kubernetes.io/managed-by: Helm
     app: oasees-portal
 spec:
   replicas: 1
@@ -18,7 +22,7 @@ spec:
         node-role.kubernetes.io/control-plane: "true"
       containers:
       - name: oasees-portal
-        imagePullPolicy: Always
+        # imagePullPolicy: Always
         image: oasees/oasees-portal:latest
         command: [ "/bin/sh", "-c" ]
         args:
@@ -29,7 +33,7 @@ spec:
         - containerPort: 3000
         env:
         - name: REACT_APP_EXPOSED_IP
-          value: {{ .Values.exposedIP }}
+          value: {{ .Values.exposedIP | default "localhost" | quote }}
         - name: REACT_APP_BLOCKCHAIN_HOST
           value: "10.160.3.172"
 ---
@@ -37,7 +41,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
+  annotations:
+    meta.helm.sh/release-name: oasees-user
   name: oasees-portal
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    app: oasees-portal
 spec:
   type: NodePort
   selector:
