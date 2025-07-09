@@ -12,11 +12,11 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: oasees-solidity-ide
+      component: oasees-solidity-ide
   template:
     metadata:
       labels:
-        app: oasees-solidity-ide
+        component: oasees-solidity-ide
     spec:
       nodeSelector:
         node-role.kubernetes.io/control-plane: "true"
@@ -37,13 +37,13 @@ metadata:
     meta.helm.sh/release-name: oasees-user
     meta.helm.sh/release-namespace: default
   labels:
-    app.kubernetes.io/managed-by: Helm
+    # app.kubernetes.io/managed-by: Helm
     component: oasees-solidity-ide
 spec:
   type: NodePort
   selector:
-    app: oasees-solidity-ide
+    component: oasees-solidity-ide
   ports:
     - port: 3001
   selector:
-    app: oasees-solidity-ide
+    component: oasees-solidity-ide

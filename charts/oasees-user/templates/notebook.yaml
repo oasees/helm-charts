@@ -74,11 +74,11 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: oasees-notebook
+      component: oasees-notebook
   template:
     metadata:
       labels:
-        app: oasees-notebook
+        component: oasees-notebook
     spec:
       nodeSelector:
         node-role.kubernetes.io/control-plane: "true"
@@ -109,4 +109,4 @@ spec:
   ports:
   - port: 8081
   selector:
-    app: oasees-notebook
+    component: oasees-notebook

@@ -7,16 +7,16 @@ metadata:
   name: oasees-ipfs
   labels:
     app.kubernetes.io/managed-by: Helm
-    app: oasees-ipfs
+    component: oasees-ipfs
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: oasees-ipfs
+      component: oasees-ipfs
   template:
     metadata:
       labels:
-        app: oasees-ipfs
+        component: oasees-ipfs
     spec:
       nodeSelector:
         node-role.kubernetes.io/control-plane: "true"
@@ -36,8 +36,7 @@ spec:
         - name: MASTER_PEER_ID
           value: "12D3KooWG51xC8aADbouSfTbqCfAjUMbWiiWeVFSnBcqby31bTXE"
         - name: EXPOSED_IP
-          value: "10.160.1.209"
-          # value: {{ .Values.exposedIP | default "localhost" | quote }}
+          value: {{ .Values.exposedIP | default "localhost" | quote }}
 
 ---
 
@@ -47,11 +46,12 @@ metadata:
   annotations:
     meta.helm.sh/release-name: oasees-user
     meta.helm.sh/release-namespace: default
+  labels:
+    component: oasees-ipfs
   name: oasees-ipfs
 spec:
   selector:
-    app.kubernetes.io/managed-by: Helm
-    app: oasees-ipfs
+    component: oasees-ipfs
   ports:
     - port: 5001
       targetPort: 5001

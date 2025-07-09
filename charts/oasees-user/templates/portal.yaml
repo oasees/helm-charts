@@ -7,16 +7,16 @@ metadata:
   name: oasees-portal
   labels:
     app.kubernetes.io/managed-by: Helm
-    app: oasees-portal
+    component: oasees-portal
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: oasees-portal
+      component: oasees-portal
   template:
     metadata:
       labels:
-        app: oasees-portal
+        component: oasees-portal
     spec:
       nodeSelector:
         node-role.kubernetes.io/control-plane: "true"
@@ -47,12 +47,12 @@ metadata:
     meta.helm.sh/release-name: oasees-user
   name: oasees-portal
   labels:
-    app.kubernetes.io/managed-by: Helm
-    app: oasees-portal
+    # app.kubernetes.io/managed-by: Helm
+    component: oasees-portal
 spec:
   type: NodePort
   selector:
-    app: oasees-portal
+    component: oasees-portal
   ports:
     - port: 3000
       targetPort: 3000

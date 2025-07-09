@@ -7,16 +7,16 @@ metadata:
   name: cluster-backend
   labels:
     app.kubernetes.io/managed-by: Helm
-    app: cluster-backend
+    component: cluster-backend
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: cluster-backend
+      component: cluster-backend
   template:
     metadata:
       labels:
-        app: cluster-backend
+        component: cluster-backend
     spec:
       serviceAccountName: notebook-sa
       containers:
@@ -35,12 +35,13 @@ metadata:
     meta.helm.sh/release-name: oasees-user
     meta.helm.sh/release-namespace: default
   labels:
-    app.kubernetes.io/managed-by: Helm
+    # app.kubernetes.io/managed-by: Helm
+    component: cluster-backend
   name: cluster-backend
 spec:
   type: NodePort
   selector:
-    app: cluster-backend
+    component: cluster-backend
   ports:
     - port: 4000
       targetPort: 4000

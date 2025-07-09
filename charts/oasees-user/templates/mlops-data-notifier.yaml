@@ -11,11 +11,11 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: mlops-data-notifier
+      component: mlops-data-notifier
   template:
     metadata:
       labels:
-        app: mlops-data-notifier
+        component: mlops-data-notifier
     spec:
       containers:
       - name: mlops-data-notifier
