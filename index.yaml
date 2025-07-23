@@ -34,6 +34,16 @@ entries:
   oasees-user:
   - apiVersion: v2
     appVersion: 1.16.0
+    created: "2025-07-23T09:41:04.936211466Z"
+    description: A chart containing all the needed OASEES components
+    digest: 7ed7662bcff34487be027093caf2d088a7add42f10210e7c7bac041a61b9bfd5
+    name: oasees-user
+    type: application
+    urls:
+    - https://github.com/oasees/helm-charts/releases/download/oasees-user-0.3.12/oasees-user-0.3.12.tgz
+    version: 0.3.12
+  - apiVersion: v2
+    appVersion: 1.16.0
     created: "2025-07-17T13:04:14.90280283Z"
     description: A chart containing all the needed OASEES components
     digest: 1e4f03fd4e3a6bb7e272f4c8c5f9cae64ac907172bbfd0397ad5c30707dc3fc4
@@ -196,4 +206,4 @@ entries:
     urls:
     - https://github.com/oasees/helm-charts/releases/download/training-worker-0.1.0/training-worker-0.1.0.tgz
     version: 0.1.0
-generated: "2025-07-17T13:04:14.902906575Z"
+generated: "2025-07-23T09:41:04.936361739Z"
