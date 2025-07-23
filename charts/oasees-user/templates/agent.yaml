@@ -17,10 +17,12 @@ spec:
       labels:
         component: oasees-agent
     spec:
+      hostNetwork: true
+      dnsPolicy: "ClusterFirstWithHostNet"
       containers:
       - name: oasees-agent
         image: oasees/oasees-agent:latest
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         env:
         - name: NODE_NAME
           valueFrom:
