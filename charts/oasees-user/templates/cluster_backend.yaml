@@ -1,3 +1,17 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cluster-backend-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 200Mi
+
+---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -19,12 +33,24 @@ spec:
         component: cluster-backend
     spec:
       serviceAccountName: notebook-sa
+      nodeSelector:
+        node-role.kubernetes.io/control-plane: "true"
       containers:
       - name: cluster-backend
         image: oasees/cluster-backend:latest
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         ports:
         - containerPort: 4000
+        env:
+        - name: DB_PATH
+          value: "/data/devices.db"
+        volumeMounts:
+        - name: sqlite-storage
+          mountPath: /data
+      volumes:
+      - name: sqlite-storage
+        persistentVolumeClaim:
+          claimName: cluster-backend-pvc
 
 ---
 
