@@ -28,3 +28,11 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: CB_IP
+          value: "cluster-backend.default.svc.cluster.local"
+        - name: CB_PORT
+          value: "4000"
+        - name: CLUSTER_IP
+          value: "thanos-query.default.svc.cluster.local"
+        - name: TELEMETRY_IP
+          value: "oasees-telemetry-api-svc.default.svc.cluster.local"
