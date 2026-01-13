@@ -38,7 +38,7 @@ spec:
           # value: "10.160.1.209"
           value: {{ .Values.exposedIP | default "localhost" | quote }}
         - name: REACT_APP_BLOCKCHAIN_HOST
-          value: "10.160.3.172"
+          value: {{ .Values.blockchainHost | default "10.160.3.172" | quote }}
 ---
 
 apiVersion: v1
